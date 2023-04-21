@@ -170,6 +170,58 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Text: {fileID: 1439542848}
   HealthBarFill: {fileID: 903175451}
+  IdleColor: {r: 1, g: 0.5613208, b: 0.92406356, a: 1}
+  DamageColor: {r: 1, g: 0.1273585, b: 0.40629852, a: 1}
+  fillColorCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 2
+      outSlope: 2
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 1
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  AnimationTime: 0.5
+  fillScaleCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: -0.009129642
+      outSlope: -0.009129642
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0.25833333
+    - serializedVersion: 3
+      time: 1
+      value: 1
+      inSlope: 2.481858
+      outSlope: 2.481858
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.21666664
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  ToTrack: {fileID: 0}
 --- !u!1 &314539980
 GameObject:
   m_ObjectHideFlags: 0
@@ -795,7 +847,10 @@ MonoBehaviour:
   MapSize: {x: 7, y: 5}
   TileSwapDuration: 0.2
   TileFallDuration: 0.3
+  MatchClearDelay: 0.1
+  TileDamageDuration: 1
   HeightPerSpawnedTile: 1.5
+  HealthUI: {fileID: 42572788}
   PlayerPosition: {fileID: 314539981}
   EnemyPositions:
   - {fileID: 484682317}

@@ -1,5 +1,4 @@
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class EnemyUnit : MonoBehaviour {
@@ -19,6 +18,7 @@ public class EnemyUnit : MonoBehaviour {
         Data = data;
         Health = data.MaxHealth;
         TurnTimerRemaining = data.TurnTimer;
+        Renderer.sprite = Data.Sprite;
     }
 
     public IEnumerator DoTurn() {
@@ -26,12 +26,9 @@ public class EnemyUnit : MonoBehaviour {
 
         if(TurnTimerRemaining <= 0) {
             TurnTimerRemaining = Data.TurnTimer;
+            GameManager.Instance.DamagePlayer(Data.Damage);
             Debug.Log("enemy attack!!!");
-            GameManager.Instance.Player.Health -= Data.Damage;
         }
-
-        
-
         yield return null;
     }
 }

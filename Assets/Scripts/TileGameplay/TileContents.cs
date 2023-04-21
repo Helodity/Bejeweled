@@ -34,10 +34,6 @@ public class TileContents : MonoBehaviour
             Debug.LogError("Tried to set content type to SIZE");
             return;
         }
-        if(sprites.Length != (int)ContentType.SIZE) {
-            Debug.LogError("Inconsistencies between sprite array and content types!");
-            return;
-        }
         contents = content;
         Renderer.sprite = sprites[(int)content];
     }

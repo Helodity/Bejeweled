@@ -8,7 +8,7 @@ public class AspectRatioEnforcer : MonoBehaviour
     void Start()
     {
         float targetaspect = AspectRatio.x / AspectRatio.y;
-        float windowaspect = (float)Screen.width / (float)Screen.height;
+        float windowaspect = (float)Screen.width / Screen.height;
 
         // current viewport height should be scaled by this amount
         float scaleheight = windowaspect / targetaspect;

@@ -15,5 +15,5 @@ MonoBehaviour:
   Name: Dummy
   Sprite: {fileID: 21300000, guid: ebbaa923af37edc4eb42308c6246ecf1, type: 3}
   MaxHealth: 10
-  TurnTimer: 3
+  TurnTimer: 1
   Damage: 5
