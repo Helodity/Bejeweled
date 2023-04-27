@@ -8,7 +8,7 @@ public class GameManager : MonoBehaviour
 {
     public static GameManager Instance;
     [Header("Prefabs")]
-    [SerializeField] PlayerUnit PlayerPrefab;
+    [SerializeField] PlayerStats PlayerPrefab;
     [SerializeField] EnemyUnit EnemyPrefab;
     [SerializeField] Tile TilePrefab;
     [SerializeField] TileContents TileContentsPrefab;
@@ -35,12 +35,12 @@ public class GameManager : MonoBehaviour
     public Tile HighlightedTile { get; private set; }
 
     [Header("Units")]
-    [SerializeField] PlayerUnit Player;
     [SerializeField] List<EnemyUnit> Enemies;
 
     bool ReceivingInput = false;
 
-    int PlayerBalance = 0;
+
+    public PlayerStats Player;
 
 
     private void Awake() {
@@ -50,6 +50,9 @@ public class GameManager : MonoBehaviour
         }
         CreateMap();
         CreateUnits();
+        Player = new PlayerStats();
+        Player.Initialize();
+        HealthUI.ToTrack = Player;
         ReceivingInput = true;
     }
     void CreateMap() {
@@ -91,11 +94,13 @@ public class GameManager : MonoBehaviour
     }
 
     void CreateUnits() {
-        Player = Instantiate(PlayerPrefab, PlayerPosition.position, Quaternion.identity);
-        Player.Initialize();
-        HealthUI.ToTrack = Player;
-
         EnemyUnit e = Instantiate(EnemyPrefab, EnemyPositions[0].position, Quaternion.identity);
+        e.Initialize(EnemyTypes.First());
+        Enemies.Add(e);
+        e = Instantiate(EnemyPrefab, EnemyPositions[1].position, Quaternion.identity);
+        e.Initialize(EnemyTypes.First());
+        Enemies.Add(e);
+        e = Instantiate(EnemyPrefab, EnemyPositions[2].position, Quaternion.identity);
         e.Initialize(EnemyTypes.First());
         Enemies.Add(e);
     }
@@ -243,7 +248,7 @@ public class GameManager : MonoBehaviour
                 HealPlayer(baseValue * m.Tiles.Count() * combo);
             }
             if(m.Content == TileContents.ContentType.Money) {
-                PlayerBalance += m.Tiles.Count();
+                Player.Currency += m.Tiles.Count();
             }
         }
         if(totalMatches.Count() > 0) {
@@ -301,8 +306,6 @@ public class GameManager : MonoBehaviour
 
     public void OnDrawGizmos() {
         Gizmos.DrawWireCube(transform.position, new Vector3(MapSize.x, MapSize.y, 1));
-        Gizmos.color = Color.blue;
-        Gizmos.DrawWireSphere(PlayerPosition.position, 0.2f);
         Gizmos.color = Color.red;
         foreach(Transform t in EnemyPositions) {
             Gizmos.DrawWireSphere(t.position, 0.2f);

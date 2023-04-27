@@ -17,7 +17,7 @@ public class EnemyUnit : MonoBehaviour {
     public void Initialize(EnemyType data) {
         Data = data;
         Health = data.MaxHealth;
-        TurnTimerRemaining = data.TurnTimer;
+        TurnTimerRemaining = data.TurnTimer + Random.Range(-1,2);
         Renderer.sprite = Data.Sprite;
     }
 
@@ -25,7 +25,7 @@ public class EnemyUnit : MonoBehaviour {
         TurnTimerRemaining--;
 
         if(TurnTimerRemaining <= 0) {
-            TurnTimerRemaining = Data.TurnTimer;
+            TurnTimerRemaining = Data.TurnTimer + Random.Range(0, 1);
             GameManager.Instance.DamagePlayer(Data.Damage);
             Debug.Log("enemy attack!!!");
         }

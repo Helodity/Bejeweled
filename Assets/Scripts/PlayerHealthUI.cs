@@ -18,7 +18,7 @@ public class PlayerHealthUI : MonoBehaviour
     [SerializeField] float AnimationTime;
     [SerializeField] AnimationCurve fillScaleCurve;
 
-    [HideInInspector] public PlayerUnit ToTrack;
+    public PlayerStats ToTrack;
 
     float AnimationTimeRemaining;
     Color AnimationColor = Color.white;
