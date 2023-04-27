@@ -22,8 +22,10 @@ public class GameManager : MonoBehaviour
     [SerializeField] float TileFallDuration = 0.2f;
     [SerializeField] float MatchClearDelay = 0.1f;
     [SerializeField] float TileDamageDuration = 1f;
+    [SerializeField] float DamageShakeDuration = 0.2f;
     [SerializeField] float HeightPerSpawnedTile = 1.5f;
     [SerializeField] PlayerHealthUI HealthUI;
+    [SerializeField] CameraManager CameraController;
 
     [SerializeField] Transform PlayerPosition;
     [SerializeField] List<Transform> EnemyPositions;
@@ -42,6 +44,7 @@ public class GameManager : MonoBehaviour
 
 
     private void Awake() {
+        Application.targetFrameRate = 60;
         if(Instance == null) {
             Instance = this;
         }
@@ -235,13 +238,17 @@ public class GameManager : MonoBehaviour
             Debug.Log($"{m.Content} {m.Tiles.Count()} {m.IsCornerMatch}");
 
             if(m.Content == TileContents.ContentType.Healing) {
-                DamagePlayer(-m.Tiles.Count() * combo);
+                int baseValue = Mathf.Max(1, m.Tiles.Count() - 3);
+
+                HealPlayer(baseValue * m.Tiles.Count() * combo);
             }
             if(m.Content == TileContents.ContentType.Money) {
                 PlayerBalance += m.Tiles.Count();
             }
         }
-        yield return new WaitForSeconds(TileDamageDuration);
+        if(totalMatches.Count() > 0) {
+            yield return new WaitForSeconds(TileDamageDuration);
+        }
     }
 
     public IEnumerator SelectTile(Tile t) {
@@ -304,12 +311,19 @@ public class GameManager : MonoBehaviour
 
     public void DamagePlayer(int amount) {
         Player.Health -= amount;
-
+        HealthUI.StartDamageAnimation();
+        CameraController.StartShakeEffect(DamageShakeDuration, amount * 0.1f);
         if(Player.Health <= 0) {
             Player.Health = 0;
             //Die 
         }
         //play damage animation
     }
-
+    public void HealPlayer(int amount) {
+        Player.Health += amount;
+        if(Player.Health > Player.MaxHealth) {
+            Player.Health = Player.MaxHealth;
+        }
+        HealthUI.StartHealAnimation();
+    }
 }

@@ -10,11 +10,11 @@ public class TileDestructionEffect : MonoBehaviour
     void Start()
     {
         system = GetComponent<ParticleSystem>();
-        LifeTime = system.startLifetime;
     }
     private void Update() {
-        LifeTime -= Time.deltaTime;
-        if(LifeTime < 0)
+
+        if(!system.IsAlive()) {
             Destroy(gameObject);
+        }
     }
 }

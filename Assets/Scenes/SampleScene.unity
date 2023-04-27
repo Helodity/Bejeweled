@@ -148,7 +148,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 42572786}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 3, z: 0}
+  m_LocalPosition: {x: 0, y: 3.5, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -172,6 +172,7 @@ MonoBehaviour:
   HealthBarFill: {fileID: 903175451}
   IdleColor: {r: 1, g: 0.5613208, b: 0.92406356, a: 1}
   DamageColor: {r: 1, g: 0.1273585, b: 0.40629852, a: 1}
+  HealColor: {r: 0, g: 1, b: 0.32023644, a: 1}
   fillColorCurve:
     serializedVersion: 2
     m_Curve:
@@ -398,6 +399,7 @@ GameObject:
   - component: {fileID: 519420031}
   - component: {fileID: 519420029}
   - component: {fileID: 519420033}
+  - component: {fileID: 519420034}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -464,7 +466,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 519420028}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 4, z: -10}
+  m_LocalPosition: {x: 0, y: 3.5, z: -10}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -484,6 +486,20 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   AspectRatio: {x: 9, y: 16}
+--- !u!114 &519420034
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 519420028}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6cdaa25471c638546a6543db24fdb349, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ShakeTimeRemaining: 0
+  ShakeScale: 1
 --- !u!1 &903175449
 GameObject:
   m_ObjectHideFlags: 0
@@ -844,13 +860,15 @@ MonoBehaviour:
   TileContentsPrefab: {fileID: 7269173168625643919, guid: 3a61841ffb7e9284a91411669183b968, type: 3}
   EnemyTypes:
   - {fileID: 11400000, guid: 306c95f7ea26ff346923ba8355d1a1ca, type: 2}
-  MapSize: {x: 7, y: 5}
+  MapSize: {x: 7, y: 6}
   TileSwapDuration: 0.2
   TileFallDuration: 0.3
   MatchClearDelay: 0.1
   TileDamageDuration: 1
+  DamageShakeDuration: 0.2
   HeightPerSpawnedTile: 1.5
   HealthUI: {fileID: 42572788}
+  CameraController: {fileID: 519420034}
   PlayerPosition: {fileID: 314539981}
   EnemyPositions:
   - {fileID: 484682317}
