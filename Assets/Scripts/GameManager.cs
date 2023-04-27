@@ -165,7 +165,7 @@ public class GameManager : MonoBehaviour
         List<Tuple<Match, Match>> toCombine = new List<Tuple<Match, Match>>();
         //Combine matches that share elements and types into corner matches
         for(int m1 = 0; m1 < matches.Count(); m1++) {
-            for(int m2 = 0; m2 < matches.Count(); m2++) {
+            for(int m2 = m1; m2 < matches.Count(); m2++) {
                 if(m1 == m2)
                     continue;
 
@@ -176,10 +176,10 @@ public class GameManager : MonoBehaviour
                 }
             }
         }
-        foreach(Tuple<Match, Match> t in toCombine) {
-            matches.Remove(t.Item1);
-            matches.Remove(t.Item2);
-            matches.Add(new Match(t.Item1.Content, new List<Tile>(t.Item1.Tiles.Concat(t.Item2.Tiles)).Distinct().ToList()));
+        foreach(Tuple<Match, Match> m in toCombine) {
+            matches.Remove(m.Item1);
+            matches.Remove(m.Item2);
+            matches.Add(new Match(m.Item1.Content, new List<Tile>(m.Item1.Tiles.Concat(m.Item2.Tiles)).Distinct().ToList()));
         }
 
         return matches;
@@ -187,19 +187,25 @@ public class GameManager : MonoBehaviour
 
     IEnumerator HandleLines() {
         List<Match> totalMatches = new List<Match>();
-        List<Match> matches = GetMatches();
-        totalMatches.AddRange(matches);
-        List<Tile> clearedTiles = new List<Tile>();
-        foreach(Match match in matches) {
-            foreach(Tile t in match.Tiles) {
-                if(!clearedTiles.Contains(t)) {
-                    clearedTiles.Add(t);
-                    t.Contents.Clear();
-                }
+
+        while(true) {
+            List<Match> matches = GetMatches();
+            if(matches.Count == 0) {
+                break;
             }
-            yield return new WaitForSeconds(MatchClearDelay);
-        }
-        while(clearedTiles.Count > 0) {
+            //Destroy all the tiles, one match at a time
+            totalMatches.AddRange(matches);
+            List<Tile> clearedTiles = new List<Tile>();
+            foreach(Match match in matches) {
+                foreach(Tile t in match.Tiles) {
+                    if(!clearedTiles.Contains(t)) {
+                        clearedTiles.Add(t);
+                        t.Contents.Clear();
+                    }
+                }
+                yield return new WaitForSeconds(MatchClearDelay);
+            }
+            //Spawn the new contents and animate them falling
             for(int x = MapSize.x - 1; x >= 0; x--) {
                 int spawned = 1;
                 for(int y = MapSize.y - 1; y >= 0; y--) {
@@ -225,34 +231,10 @@ public class GameManager : MonoBehaviour
                 }
             }
             yield return new WaitForSeconds(TileFallDuration + 0.2f);
-
-            matches = GetMatches();
-            totalMatches.AddRange(matches);
-            clearedTiles = new List<Tile>();
-            foreach(Match match in matches) {
-                foreach(Tile t in match.Tiles) {
-                    if(!clearedTiles.Contains(t)) {
-                        clearedTiles.Add(t);
-                        t.Contents.Clear();
-                    }
-                }
-            }
         }
-        int combo = totalMatches.Count();
+
         foreach(Match m in totalMatches) {
-            Debug.Log($"{m.Content} {m.Tiles.Count()} {m.IsCornerMatch}");
-
-            if(m.Content == TileContents.ContentType.Healing) {
-                int baseValue = Mathf.Max(1, m.Tiles.Count() - 3);
-
-                HealPlayer(baseValue * m.Tiles.Count() * combo);
-            }
-            if(m.Content == TileContents.ContentType.Money) {
-                Player.Currency += m.Tiles.Count();
-            }
-        }
-        if(totalMatches.Count() > 0) {
-            yield return new WaitForSeconds(TileDamageDuration);
+            yield return StartCoroutine(DoMatchEffects(m, totalMatches.Count()));
         }
     }
 
@@ -300,6 +282,35 @@ public class GameManager : MonoBehaviour
         t2.Contents.StartSwapAnimation(t2.transform.position, TileSwapDuration);
         yield return new WaitForSeconds(TileSwapDuration + 0.1f);
     }
+
+    IEnumerator DoMatchEffects(Match m, int combo) {
+        Debug.Log($"{m.Content} {m.Tiles.Count()} {m.IsCornerMatch}");
+        int baseValue = Mathf.Max(1, m.Tiles.Count() - 3);
+
+        switch(m.Content) {
+            case TileContents.ContentType.Grass:
+
+                break;
+            case TileContents.ContentType.Water: 
+
+                break;
+            case TileContents.ContentType.Electricity:
+
+                break;
+            case TileContents.ContentType.Healing:
+                yield return StartCoroutine(HealPlayer(baseValue * m.Tiles.Count() * combo));
+                break;
+            case TileContents.ContentType.Fire:
+
+                break;
+            case TileContents.ContentType.Money:
+                Player.Currency += m.Tiles.Count();
+                break;
+        }
+        yield return null;
+    }
+
+
     public void HighlightTile(Tile t) {
         HighlightedTile = t;
     }
@@ -312,21 +323,22 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    public void DamagePlayer(int amount) {
+    public IEnumerator DamagePlayer(int amount) {
         Player.Health -= amount;
-        HealthUI.StartDamageAnimation();
-        CameraController.StartShakeEffect(DamageShakeDuration, amount * 0.1f);
         if(Player.Health <= 0) {
             Player.Health = 0;
-            //Die 
         }
+        StartCoroutine(HealthUI.PlayDamageAnimation());
+        yield return StartCoroutine(CameraController.PlayShakeEffect(DamageShakeDuration, amount * 0.1f));
         //play damage animation
+        yield return null;
     }
-    public void HealPlayer(int amount) {
+    public IEnumerator HealPlayer(int amount) {
         Player.Health += amount;
         if(Player.Health > Player.MaxHealth) {
             Player.Health = Player.MaxHealth;
         }
-        HealthUI.StartHealAnimation();
+        yield return StartCoroutine(HealthUI.PlayHealAnimation());
+        yield return null;
     }
 }

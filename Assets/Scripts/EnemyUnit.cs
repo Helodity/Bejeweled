@@ -26,7 +26,7 @@ public class EnemyUnit : MonoBehaviour {
 
         if(TurnTimerRemaining <= 0) {
             TurnTimerRemaining = Data.TurnTimer + Random.Range(0, 1);
-            GameManager.Instance.DamagePlayer(Data.Damage);
+            yield return StartCoroutine(GameManager.Instance.DamagePlayer(Data.Damage));
             Debug.Log("enemy attack!!!");
         }
         yield return null;
