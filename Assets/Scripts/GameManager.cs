@@ -24,7 +24,7 @@ public class GameManager : MonoBehaviour
     [SerializeField] float DamageShakeDuration = 0.2f;
     [SerializeField] float HeightPerSpawnedTile = 1.5f;
     [SerializeField] float TargetSwapDuration = 0.1f;
-    [SerializeField] PlayerHealthUI HealthUI;
+    [SerializeField] HealthUI HealthUI;
     [SerializeField] CameraManager CameraController;
     [SerializeField] FadeManager FadeController;
     [SerializeField] TargettingIcon TargetIcon;
@@ -61,6 +61,8 @@ public class GameManager : MonoBehaviour
         yield return StartCoroutine(FadeController.DoFadeOut(1f));
         yield return new WaitForSeconds(0.3f);
         yield return StartCoroutine(SpawnWave(WaveList[0]));
+        AttackTarget = Enemies[0];
+        StartCoroutine(TargetIcon.FadeTo(AttackTarget.transform, 0.2f));
         ReceivingInput = true;
     }
 
@@ -253,14 +255,16 @@ public class GameManager : MonoBehaviour
 
         yield return StartCoroutine(DoMatchEffects(totalMatches));
     }
-
-    public IEnumerator SelectEnemy(EnemyUnit u) {
+    public IEnumerator OnEnemyClick(EnemyUnit u) {
         if(!ReceivingInput)
             yield break;
         ReceivingInput = false;
+        yield return StartCoroutine(SelectEnemy(u));
+        ReceivingInput = true;
+    }
+    IEnumerator SelectEnemy(EnemyUnit u) {
         AttackTarget = u;
         yield return StartCoroutine(TargetIcon.MoveTo(u.transform, TargetSwapDuration));
-        ReceivingInput = true;
     }
 
     public IEnumerator SelectTile(Tile t) {
@@ -316,27 +320,27 @@ public class GameManager : MonoBehaviour
 
         int healing = 0;
         int currency = 0;
-
+        int damage = 0;
         //Pile all the damage types together
         foreach(Match m in matches) {
             Debug.Log($"{m.Content} {m.Tiles.Count()} {m.IsCornerMatch}");
-            int baseValue = Mathf.Max(1, m.Tiles.Count() - 3);
+            int baseValue = Mathf.Max(1, (m.Tiles.Count() - 1) / 2); 
 
             switch(m.Content) {
                 case TileContents.ContentType.Grass:
-
+                    damage += baseValue * m.Tiles.Count();
                     break;
                 case TileContents.ContentType.Water:
-
+                    damage += baseValue * m.Tiles.Count();
                     break;
                 case TileContents.ContentType.Electricity:
-
+                    damage += baseValue * m.Tiles.Count();
                     break;
                 case TileContents.ContentType.Healing:
                     healing += baseValue * m.Tiles.Count() * matches.Count();
                     break;
                 case TileContents.ContentType.Fire:
-
+                    damage += baseValue * m.Tiles.Count();
                     break;
                 case TileContents.ContentType.Money:
                     currency += m.Tiles.Count();
@@ -351,10 +355,12 @@ public class GameManager : MonoBehaviour
         if(currency > 0) {
             Player.Currency += currency;
         }
+        if(damage > 0) {
+            toWaitfor.Add(StartCoroutine(AttackTarget.ReceiveDamage(damage)));
+        }
         foreach(Coroutine c in toWaitfor) {
             yield return c;
         }
-
         yield return null;
     }
 
@@ -363,10 +369,7 @@ public class GameManager : MonoBehaviour
         HighlightedTile = t;
     }
     public IEnumerator DamagePlayer(int amount) {
-        Player.Health -= amount;
-        if(Player.Health <= 0) {
-            Player.Health = 0;
-        }
+        StartCoroutine(Player.ReceiveDamage(amount));
         Coroutine uiAnim = StartCoroutine(HealthUI.PlayDamageAnimation());
         Coroutine shakeAnim = StartCoroutine(CameraController.PlayShakeEffect(DamageShakeDuration, amount * 0.1f));
 
@@ -374,13 +377,20 @@ public class GameManager : MonoBehaviour
         yield return shakeAnim;
     }
     public IEnumerator HealPlayer(int amount) {
-        Player.Health += amount;
-        if(Player.Health > Player.MaxHealth) {
-            Player.Health = Player.MaxHealth;
-        }
-
+        StartCoroutine(Player.ReceiveHealing(amount));
         Coroutine uiAnim = StartCoroutine(HealthUI.PlayHealAnimation());
 
         yield return uiAnim;
+    }
+    public IEnumerator Kill(EnemyUnit unit) {
+        Enemies.Remove(unit);
+        if(Enemies.Count == 0) {
+            Debug.Log("So like, wave is done!");
+            yield break;
+        }
+        if(AttackTarget == unit) {
+            yield return StartCoroutine(SelectEnemy(Enemies[0]));
+        }
+        yield return null;
     }
 }

@@ -3,9 +3,8 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class PlayerHealthUI : MonoBehaviour
+public class HealthUI : MonoBehaviour
 {
-    //[SerializeField] SpriteRenderer BarRenderer;
     [SerializeField] TMP_Text Text;
     [SerializeField] Image HealthBarFill;
 
@@ -19,13 +18,17 @@ public class PlayerHealthUI : MonoBehaviour
     [SerializeField] float AnimationTime;
     [SerializeField] AnimationCurve fillScaleCurve;
 
-    public PlayerStats ToTrack;
+    public IHealth ToTrack;
+
+    private void Awake() {
+        HealthBarFill.color = IdleColor;
+    }
 
     private void Update() {
         if(ToTrack == null)
             return;
-
-        Text.text = ToTrack.Health.ToString();
+        if(Text != null)
+            Text.text = ToTrack.GetCurrentHealth().ToString();
     }
 
     public IEnumerator PlayHealAnimation() {
@@ -38,7 +41,7 @@ public class PlayerHealthUI : MonoBehaviour
     IEnumerator PlayFillAnimation(Color startColor) {
         float durationRemaining = AnimationTime;
         Vector3 startScale = HealthBarFill.rectTransform.localScale;
-        Vector3 targetScale = new Vector3((float)ToTrack.Health / ToTrack.MaxHealth, 1, 1);
+        Vector3 targetScale = new Vector3(ToTrack.GetHealthRatio(), 1, 1);
         while(durationRemaining > 0) {
             HealthBarFill.color = Color.Lerp(IdleColor, startColor, fillColorCurve.Evaluate(durationRemaining / AnimationTime));
             HealthBarFill.rectTransform.localScale = Vector3.Lerp(targetScale, startScale, fillScaleCurve.Evaluate(durationRemaining / AnimationTime));
