@@ -36,6 +36,7 @@ public class GameManager : MonoBehaviour
 
     [Header("Units")]
     [SerializeField] List<EnemyUnit> Enemies;
+    EnemyUnit AttackTarget;
 
     bool ReceivingInput = false;
 
@@ -233,9 +234,7 @@ public class GameManager : MonoBehaviour
             yield return new WaitForSeconds(TileFallDuration + 0.2f);
         }
 
-        foreach(Match m in totalMatches) {
-            yield return StartCoroutine(DoMatchEffects(m, totalMatches.Count()));
-        }
+        yield return StartCoroutine(DoMatchEffects(totalMatches));
     }
 
     public IEnumerator SelectTile(Tile t) {
@@ -257,6 +256,7 @@ public class GameManager : MonoBehaviour
         yield return StartCoroutine(SwapTiles(t1, t2));
         SelectedTile = null;
         yield return StartCoroutine(HandleLines());
+        yield return new WaitForSeconds(0.1f);
         yield return StartCoroutine(DoEnemyTurn());
         ReceivingInput = true;
     }
@@ -283,30 +283,49 @@ public class GameManager : MonoBehaviour
         yield return new WaitForSeconds(TileSwapDuration + 0.1f);
     }
 
-    IEnumerator DoMatchEffects(Match m, int combo) {
-        Debug.Log($"{m.Content} {m.Tiles.Count()} {m.IsCornerMatch}");
-        int baseValue = Mathf.Max(1, m.Tiles.Count() - 3);
+    IEnumerator DoMatchEffects(List<Match> matches) {
 
-        switch(m.Content) {
-            case TileContents.ContentType.Grass:
+        int healing = 0;
+        int currency = 0;
 
-                break;
-            case TileContents.ContentType.Water: 
+        //Pile all the damage types together
+        foreach(Match m in matches) {
+            Debug.Log($"{m.Content} {m.Tiles.Count()} {m.IsCornerMatch}");
+            int baseValue = Mathf.Max(1, m.Tiles.Count() - 3);
 
-                break;
-            case TileContents.ContentType.Electricity:
+            switch(m.Content) {
+                case TileContents.ContentType.Grass:
 
-                break;
-            case TileContents.ContentType.Healing:
-                yield return StartCoroutine(HealPlayer(baseValue * m.Tiles.Count() * combo));
-                break;
-            case TileContents.ContentType.Fire:
+                    break;
+                case TileContents.ContentType.Water:
 
-                break;
-            case TileContents.ContentType.Money:
-                Player.Currency += m.Tiles.Count();
-                break;
+                    break;
+                case TileContents.ContentType.Electricity:
+
+                    break;
+                case TileContents.ContentType.Healing:
+                    healing += baseValue * m.Tiles.Count() * matches.Count();
+                    break;
+                case TileContents.ContentType.Fire:
+
+                    break;
+                case TileContents.ContentType.Money:
+                    currency += m.Tiles.Count();
+                    break;
+            }
         }
+
+        List<Coroutine> toWaitfor = new List<Coroutine>();
+        if(healing > 0) {
+            toWaitfor.Add(StartCoroutine(HealPlayer(healing)));
+        }
+        if(currency > 0) {
+            Player.Currency += currency;
+        }
+        foreach(Coroutine c in toWaitfor) {
+            yield return c;
+        }
+
         yield return null;
     }
 
@@ -328,17 +347,20 @@ public class GameManager : MonoBehaviour
         if(Player.Health <= 0) {
             Player.Health = 0;
         }
-        StartCoroutine(HealthUI.PlayDamageAnimation());
-        yield return StartCoroutine(CameraController.PlayShakeEffect(DamageShakeDuration, amount * 0.1f));
-        //play damage animation
-        yield return null;
+        Coroutine uiAnim = StartCoroutine(HealthUI.PlayDamageAnimation());
+        Coroutine shakeAnim = StartCoroutine(CameraController.PlayShakeEffect(DamageShakeDuration, amount * 0.1f));
+
+        yield return uiAnim;
+        yield return shakeAnim;
     }
     public IEnumerator HealPlayer(int amount) {
         Player.Health += amount;
         if(Player.Health > Player.MaxHealth) {
             Player.Health = Player.MaxHealth;
         }
-        yield return StartCoroutine(HealthUI.PlayHealAnimation());
-        yield return null;
+
+        Coroutine uiAnim = StartCoroutine(HealthUI.PlayHealAnimation());
+
+        yield return uiAnim;
     }
 }
