@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using Unity.VisualScripting;
 using UnityEngine;
 
 public class GameManager : MonoBehaviour
@@ -21,28 +22,26 @@ public class GameManager : MonoBehaviour
     [SerializeField] float TileSwapDuration = 0.2f;
     [SerializeField] float TileFallDuration = 0.2f;
     [SerializeField] float MatchClearDelay = 0.1f;
-    [SerializeField] float TileDamageDuration = 1f;
     [SerializeField] float DamageShakeDuration = 0.2f;
     [SerializeField] float HeightPerSpawnedTile = 1.5f;
     [SerializeField] PlayerHealthUI HealthUI;
     [SerializeField] CameraManager CameraController;
 
-    [SerializeField] Transform PlayerPosition;
-    [SerializeField] List<Transform> EnemyPositions;
+    [SerializeField] Transform EnemyCenter;
+    [SerializeField] float EnemySpawnScale;
 
     public Tile[,] Map;
     public Tile SelectedTile { get; private set; }
     public Tile HighlightedTile { get; private set; }
 
     [Header("Units")]
+    [SerializeField] List<EnemyWave> WaveList;
     [SerializeField] List<EnemyUnit> Enemies;
     EnemyUnit AttackTarget;
 
     bool ReceivingInput = false;
 
-
     public PlayerStats Player;
-
 
     private void Awake() {
         Application.targetFrameRate = 60;
@@ -50,11 +49,16 @@ public class GameManager : MonoBehaviour
             Instance = this;
         }
         CreateMap();
-        CreateUnits();
+        SpawnWave(WaveList[0]);
         Player = new PlayerStats();
         Player.Initialize();
         HealthUI.ToTrack = Player;
         ReceivingInput = true;
+    }
+    public void OnDrawGizmos() {
+        Gizmos.DrawWireCube(transform.position, new Vector3(MapSize.x, MapSize.y, 1));
+        Gizmos.color = Color.red;
+        Gizmos.DrawWireCube(EnemyCenter.position, new Vector3(EnemySpawnScale, 1, 1));
     }
     void CreateMap() {
         Map = new Tile[MapSize.x, MapSize.y];
@@ -94,8 +98,23 @@ public class GameManager : MonoBehaviour
         }
     }
 
+    void SpawnWave(EnemyWave wave) {
+        int toSpawn = Math.Min(wave.Enemies.Count, 5);
+
+        for(int i = 0; i < toSpawn; i++) {
+            float xOffset = i - (float)toSpawn / 2 + 0.5f;
+            xOffset *= (EnemySpawnScale / toSpawn);
+
+            Vector3 position = new Vector3(EnemyCenter.position.x + xOffset, EnemyCenter.position.y, EnemyCenter.position.z);
+            EnemyUnit e = Instantiate(EnemyPrefab, position, Quaternion.identity,EnemyCenter);
+            e.Initialize(EnemyTypes.First());
+            Enemies.Add(e);
+        }
+    }
+
+
     void CreateUnits() {
-        EnemyUnit e = Instantiate(EnemyPrefab, EnemyPositions[0].position, Quaternion.identity);
+        /*EnemyUnit e = Instantiate(EnemyPrefab, EnemyPositions[0].position, Quaternion.identity);
         e.Initialize(EnemyTypes.First());
         Enemies.Add(e);
         e = Instantiate(EnemyPrefab, EnemyPositions[1].position, Quaternion.identity);
@@ -103,7 +122,7 @@ public class GameManager : MonoBehaviour
         Enemies.Add(e);
         e = Instantiate(EnemyPrefab, EnemyPositions[2].position, Quaternion.identity);
         e.Initialize(EnemyTypes.First());
-        Enemies.Add(e);
+        Enemies.Add(e);*/
     }
 
     bool IsAdjacent(Tile t1, Tile t2) {
@@ -333,15 +352,6 @@ public class GameManager : MonoBehaviour
     public void HighlightTile(Tile t) {
         HighlightedTile = t;
     }
-
-    public void OnDrawGizmos() {
-        Gizmos.DrawWireCube(transform.position, new Vector3(MapSize.x, MapSize.y, 1));
-        Gizmos.color = Color.red;
-        foreach(Transform t in EnemyPositions) {
-            Gizmos.DrawWireSphere(t.position, 0.2f);
-        }
-    }
-
     public IEnumerator DamagePlayer(int amount) {
         Player.Health -= amount;
         if(Player.Health <= 0) {
