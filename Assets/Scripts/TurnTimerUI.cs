@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -12,16 +13,20 @@ public class TurnTimerUI : MonoBehaviour
     Color TargetColor;
 
     [SerializeField] TMP_Text TurnText;
-    [SerializeField] float TextScaleAmplitude = 10;
-    [SerializeField] float TextScaleFrequency = 3;
+    [SerializeField] float AttackNearScaleAmplitude = 10;
+    [SerializeField] float AttackNearScaleFrequency = 3;
+    float AttackNearPhaseOffset;
     float originalTextScale;
+    float TextScaleModifier;
 
-    [SerializeField] float ValueUpdateScaleMultiplier = 1.1f;
-    [SerializeField] float ValueUpdateAnimationDuration = 0.2f;
-    float ValueUpdateAnimationDurationRemaining;
+
+
+    [SerializeField] float ScaleEffectAmplitude = 3f;
+    [SerializeField] float ScaleEffectDuration = 0.2f;
 
     private void Awake() {
         toTrack = GetComponent<EnemyUnit>();
+        TurnText.text = toTrack.TurnTimerRemaining.ToString();
         originalTextScale = TurnText.fontSize;
         OnTextChange();
     }
@@ -29,12 +34,6 @@ public class TurnTimerUI : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if(ValueUpdateAnimationDurationRemaining > 0) {
-            ValueUpdateAnimationDurationRemaining -= Time.deltaTime;
-        } else {
-            ValueUpdateAnimationDurationRemaining = 0;
-        }
-
         string prevText = TurnText.text;
         TurnText.text = toTrack.TurnTimerRemaining.ToString();
 
@@ -42,17 +41,26 @@ public class TurnTimerUI : MonoBehaviour
             OnTextChange();
         }
 
-        UpdateTextSize();
-        TurnText.color = TargetColor;
+        if(toTrack.TurnTimerRemaining <= 1) {
+            TextScaleModifier += Mathf.Sin(Time.time * AttackNearScaleFrequency + AttackNearPhaseOffset) * AttackNearScaleAmplitude + AttackNearScaleAmplitude;
+        }
 
+        TurnText.color = TargetColor;
     }
 
-    void UpdateTextSize() {
-        float targetSize = originalTextScale;
-        if(toTrack.TurnTimerRemaining <= 1) {
-            targetSize += Mathf.Sin(Time.time * TextScaleFrequency) * TextScaleAmplitude;
+    private void LateUpdate() {
+        TurnText.fontSize = TextScaleModifier + originalTextScale;
+        TextScaleModifier = 0;
+    }
+
+    public IEnumerator DoScaleEffect() {
+        float duration = ScaleEffectDuration;
+        AttackNearPhaseOffset = Time.time - AttackNearScaleFrequency / 2;
+        while(duration > 0) {
+            duration -= Time.deltaTime;
+            TextScaleModifier += Mathf.Lerp(0, ScaleEffectAmplitude, duration / ScaleEffectDuration);
+            yield return new WaitForEndOfFrame();
         }
-        TurnText.fontSize = Mathf.Lerp(targetSize, originalTextScale * ValueUpdateScaleMultiplier, ValueUpdateAnimationDurationRemaining / ValueUpdateAnimationDuration);
     }
     void OnTextChange() {
         if(toTrack.TurnTimerRemaining <= 1) {
@@ -60,6 +68,5 @@ public class TurnTimerUI : MonoBehaviour
         } else {
             TargetColor = IdleColor;
         }
-        ValueUpdateAnimationDurationRemaining = ValueUpdateAnimationDuration;
     }
 }

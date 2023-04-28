@@ -2,7 +2,6 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using Unity.VisualScripting;
 using UnityEngine;
 
 public class GameManager : MonoBehaviour
@@ -13,9 +12,9 @@ public class GameManager : MonoBehaviour
     [SerializeField] EnemyUnit EnemyPrefab;
     [SerializeField] Tile TilePrefab;
     [SerializeField] TileContents TileContentsPrefab;
-    [SerializeField] List<EnemyType> EnemyTypes;
 
     [Header("Map")]
+    [SerializeField] Transform MapParent;
     public Vector2Int MapSize = new Vector2Int(5,5);
 
     [Header("Visuals")]
@@ -24,8 +23,11 @@ public class GameManager : MonoBehaviour
     [SerializeField] float MatchClearDelay = 0.1f;
     [SerializeField] float DamageShakeDuration = 0.2f;
     [SerializeField] float HeightPerSpawnedTile = 1.5f;
+    [SerializeField] float TargetSwapDuration = 0.1f;
     [SerializeField] PlayerHealthUI HealthUI;
     [SerializeField] CameraManager CameraController;
+    [SerializeField] FadeManager FadeController;
+    [SerializeField] TargettingIcon TargetIcon;
 
     [SerializeField] Transform EnemyCenter;
     [SerializeField] float EnemySpawnScale;
@@ -49,23 +51,31 @@ public class GameManager : MonoBehaviour
             Instance = this;
         }
         CreateMap();
-        SpawnWave(WaveList[0]);
         Player = new PlayerStats();
         Player.Initialize();
         HealthUI.ToTrack = Player;
+    }
+
+
+    private IEnumerator Start() {
+        yield return StartCoroutine(FadeController.DoFadeOut(1f));
+        yield return new WaitForSeconds(0.3f);
+        yield return StartCoroutine(SpawnWave(WaveList[0]));
         ReceivingInput = true;
     }
+
     public void OnDrawGizmos() {
         Gizmos.DrawWireCube(transform.position, new Vector3(MapSize.x, MapSize.y, 1));
         Gizmos.color = Color.red;
         Gizmos.DrawWireCube(EnemyCenter.position, new Vector3(EnemySpawnScale, 1, 1));
     }
+
     void CreateMap() {
         Map = new Tile[MapSize.x, MapSize.y];
         for(int x = 0; x < MapSize.x; x++) {
             for(int y = 0; y < MapSize.y; y++) {
                 Vector3 position = new Vector3(x - ((float)MapSize.x / 2) + 0.5f, y - ((float)MapSize.y / 2) + 0.5f, 0);
-                Tile t = Instantiate(TilePrefab, position, Quaternion.identity, transform);
+                Tile t = Instantiate(TilePrefab, position, Quaternion.identity, MapParent);
                 t.Position = new Vector2Int(x, y);
                 Map[x, y] = t;
                 TileContents tc = Instantiate(TileContentsPrefab, position, Quaternion.identity, t.transform);
@@ -98,7 +108,7 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    void SpawnWave(EnemyWave wave) {
+    IEnumerator SpawnWave(EnemyWave wave) {
         int toSpawn = Math.Min(wave.Enemies.Count, 5);
 
         for(int i = 0; i < toSpawn; i++) {
@@ -107,22 +117,10 @@ public class GameManager : MonoBehaviour
 
             Vector3 position = new Vector3(EnemyCenter.position.x + xOffset, EnemyCenter.position.y, EnemyCenter.position.z);
             EnemyUnit e = Instantiate(EnemyPrefab, position, Quaternion.identity,EnemyCenter);
-            e.Initialize(EnemyTypes.First());
+            yield return StartCoroutine(e.Initialize(wave.Enemies[i]));
             Enemies.Add(e);
+            yield return new WaitForSeconds(0.1f);
         }
-    }
-
-
-    void CreateUnits() {
-        /*EnemyUnit e = Instantiate(EnemyPrefab, EnemyPositions[0].position, Quaternion.identity);
-        e.Initialize(EnemyTypes.First());
-        Enemies.Add(e);
-        e = Instantiate(EnemyPrefab, EnemyPositions[1].position, Quaternion.identity);
-        e.Initialize(EnemyTypes.First());
-        Enemies.Add(e);
-        e = Instantiate(EnemyPrefab, EnemyPositions[2].position, Quaternion.identity);
-        e.Initialize(EnemyTypes.First());
-        Enemies.Add(e);*/
     }
 
     bool IsAdjacent(Tile t1, Tile t2) {
@@ -254,6 +252,15 @@ public class GameManager : MonoBehaviour
         }
 
         yield return StartCoroutine(DoMatchEffects(totalMatches));
+    }
+
+    public IEnumerator SelectEnemy(EnemyUnit u) {
+        if(!ReceivingInput)
+            yield break;
+        ReceivingInput = false;
+        AttackTarget = u;
+        yield return StartCoroutine(TargetIcon.MoveTo(u.transform, TargetSwapDuration));
+        ReceivingInput = true;
     }
 
     public IEnumerator SelectTile(Tile t) {
