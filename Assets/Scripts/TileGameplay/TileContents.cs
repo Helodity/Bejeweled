@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 
 public class TileContents : MonoBehaviour
@@ -17,17 +18,8 @@ public class TileContents : MonoBehaviour
     [SerializeField] Sprite[] sprites = null;
     public ContentType contents = ContentType.Grass;
 
-
-    float AnimationTime = 0.2f;
-    [SerializeField] AnimationCurve animationCurve;
+    [SerializeField] AnimationCurve SwapCurve;
     [SerializeField] TileDestructionEffect destructionEffect;
-    Vector2 AnimationStartPos;
-    Vector2 AnimationEndPos;
-    float AnimationTimeRemaining;
-
-    private void Awake() {
-        AnimationEndPos = transform.position;
-    }
 
     public void SetContents(ContentType content) {
         if(content == ContentType.SIZE) {
@@ -37,23 +29,19 @@ public class TileContents : MonoBehaviour
         contents = content;
         Renderer.sprite = sprites[(int)content];
     }
-    public void StartSwapAnimation(Vector2 target, float duration) {
-        AnimationStartPos = transform.position;
-        AnimationTime = duration;
-        AnimationTimeRemaining = AnimationTime;
-        AnimationEndPos = target;
+
+    public IEnumerator DoSwapAnimation(Vector2 target, float duration) {
+        float totalDur = duration;
+        Vector3 startPos = transform.position;
+        Vector3 endPos = target;
+        while(duration > 0) {
+            duration -= Time.deltaTime;
+            transform.position = Vector3.Lerp(endPos, startPos, SwapCurve.Evaluate(duration / totalDur));
+            yield return new WaitForEndOfFrame();
+        }
+        transform.position = endPos;
     }
 
-    // Update is called once per frame
-    void Update()
-    {
-        if(AnimationTimeRemaining > 0) {
-            AnimationTimeRemaining -= Time.deltaTime;
-            if(AnimationTimeRemaining < 0)
-                AnimationTimeRemaining = 0;
-        }
-        transform.position = Vector3.Lerp(AnimationEndPos, AnimationStartPos, animationCurve.Evaluate(AnimationTimeRemaining / AnimationTime)); 
-    }
     public void Clear() {
         Instantiate(destructionEffect, transform.position, Quaternion.identity);
         Destroy(gameObject);

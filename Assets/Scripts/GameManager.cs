@@ -236,14 +236,14 @@ public class GameManager : MonoBehaviour
                         t1.Contents = t2.Contents;
                         t2.Contents = null;
                         t1.Contents.transform.SetParent(t1.transform);
-                        t1.Contents.StartSwapAnimation(t1.transform.position, TileFallDuration);
+                        StartCoroutine(t1.Contents.DoSwapAnimation(t1.transform.position, TileFallDuration));
                     }
                     Tile top = Map[x, MapSize.y - 1];
                     Vector3 position = new Vector3(x - ((float)MapSize.x / 2) + 0.5f, MapSize.y + spawned * HeightPerSpawnedTile - ((float)MapSize.y / 2) + 0.5f, 0);
 
                     TileContents tc = Instantiate(TileContentsPrefab, position, Quaternion.identity, top.transform);
                     tc.SetContents((TileContents.ContentType)UnityEngine.Random.Range(0, (int)TileContents.ContentType.SIZE));
-                    tc.StartSwapAnimation(top.transform.position, TileFallDuration);
+                    StartCoroutine(tc.DoSwapAnimation(top.transform.position, TileFallDuration));
                     top.Contents = tc;
                     spawned++;
                 }
@@ -302,11 +302,14 @@ public class GameManager : MonoBehaviour
 
         //Move contents to the new tile
         t1.Contents.transform.SetParent(t1.transform);
-        t1.Contents.StartSwapAnimation(t1.transform.position, TileSwapDuration);
+        Coroutine a = StartCoroutine(t1.Contents.DoSwapAnimation(t1.transform.position, TileSwapDuration));
 
         t2.Contents.transform.SetParent(t2.transform);
-        t2.Contents.StartSwapAnimation(t2.transform.position, TileSwapDuration);
-        yield return new WaitForSeconds(TileSwapDuration + 0.1f);
+        Coroutine b = StartCoroutine(t2.Contents.DoSwapAnimation(t2.transform.position, TileSwapDuration));
+
+        yield return a;
+        yield return b;
+        yield return new WaitForSeconds(0.1f);
     }
 
     IEnumerator DoMatchEffects(List<Match> matches) {

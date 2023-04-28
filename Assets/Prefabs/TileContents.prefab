@@ -106,7 +106,7 @@ MonoBehaviour:
   - {fileID: -2006235290, guid: 3aaa8d7ba64d35c40b68f3635e4781b0, type: 3}
   - {fileID: -1635702883, guid: 3aaa8d7ba64d35c40b68f3635e4781b0, type: 3}
   contents: 0
-  animationCurve:
+  SwapCurve:
     serializedVersion: 2
     m_Curve:
     - serializedVersion: 3
